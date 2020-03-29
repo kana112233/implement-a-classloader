@@ -2,6 +2,7 @@ package com.github.hcsp.classloader;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Objects;
@@ -32,6 +33,22 @@ public class MyClassLoader extends ClassLoader {
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         final byte[] bytes = loadClassData(name);
         return defineClass(name, bytes, 0, bytes.length);
+    }
+
+    @Override
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+        try {
+            String fileName = name.substring(name.lastIndexOf(".") + 1) + ".class";
+            InputStream is = getClass().getResourceAsStream(fileName);
+            if (is == null) {
+                return super.loadClass(name);
+            }
+            byte[] b = new byte[is.available()];
+            is.read(b);
+            return defineClass(name, b, 0, b.length);
+        } catch (IOException e) {
+            throw new ClassNotFoundException(name);
+        }
     }
 
     private byte[] loadClassData(String name) throws ClassNotFoundException {
